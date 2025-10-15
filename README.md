@@ -97,6 +97,9 @@ Ensure port 8080 and 3306 are allowed in AWS Security Group if running on EC2
 **4. CRM API in Postman POST**
 ![CRM API](images/postmanpost.png)
 
+**5. Aws Ec2 Instance **
+![Aws Ec2 Instance](images/awsec2.png)
+
 
 ✅ Summary
 
