@@ -76,6 +76,24 @@ SELECT * FROM customer;
 
 Ensure port 8080 and 3306 are allowed in AWS Security Group if running on EC2
 ===================================
+### **8️⃣ Screenshots**
+
+**1. Docker Containers Running**
+
+![Docker Containers](images/dockercontainers.png)
+
+**2. MySQL Tables**
+
+![MySQL Tables](images/mysqltables.png)
+
+**3. CRM API in Postman**
+
+![CRM API](images/getalllistapi.png)
+
+**4. CRM API in Postman POST**
+![CRM API](images/postmanpost.png)
+
+
 ✅ Summary
 
 Dockerfile: Defines Spring Boot app container
