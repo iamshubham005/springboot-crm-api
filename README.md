@@ -61,10 +61,13 @@ Run Docker Compose:
 sudo docker-compose up -d --build
 
 4️⃣ Verify
+
 sudo docker ps
 CONTAINER ID   NAME          PORTS
+
 a1b2c3d4e5f6   crm-backend   0.0.0.0:8080->8080/tcp
 b2c3d4e5f6g7   crm-mysql     0.0.0.0:3306->3306/tcp
+
 
 5️⃣ Access Database
 sudo docker exec -it crm-mysql mysql -u crmuser -p
