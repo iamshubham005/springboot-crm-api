@@ -10,30 +10,68 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout source code
+      ###############################################################
+      # 1. CHECKOUT CODE
+      ###############################################################
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Setup Java 17
+      ###############################################################
+      # 2. SETUP JAVA 17
+      ###############################################################
       - name: Setup JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # 3. Build Spring Boot JAR
+      ###############################################################
+      # 3. BUILD SPRING BOOT JAR (SKIP TESTS)
+      ###############################################################
       - name: Build JAR
         run: mvn clean package -DskipTests
 
-      # 4. Build Docker image
+      ###############################################################
+      # 4. BUILD DOCKER IMAGE
+      ###############################################################
       - name: Build Docker Image
         run: docker build -t crm-backend .
 
-      # 5. Save Docker image as tar file
-      - name: Save Docker Image
+      ###############################################################
+      # 5. SAVE DOCKER IMAGE AS TAR
+      ###############################################################
+      - name: Save Docker Image to tar
         run: docker save crm-backend -o crm-backend.tar
 
-      # 6. Upload docker image + compose file to EC2
+      ###############################################################
+      # 6. DEBUG - VERIFY FILES EXIST BEFORE SCP
+      ###############################################################
+      - name: Debug - Check generated files
+        run: |
+          echo "Listing workspace:"
+          ls -la
+
+          echo "Checking crm-backend.tar:"
+          if [ -f "crm-backend.tar" ]; then 
+            echo "crm-backend.tar found!"
+            ls -lh crm-backend.tar
+          else 
+            echo "ERROR: crm-backend.tar NOT FOUND!"
+            exit 1
+          fi
+
+          echo "Checking docker-compose.yml:"
+          if [ -f "docker-compose.yml" ]; then 
+            echo "docker-compose.yml found!"
+            ls -lh docker-compose.yml
+          else 
+            echo "ERROR: docker-compose.yml NOT FOUND!"
+            exit 1
+          fi
+
+      ###############################################################
+      # 7. SCP FILES TO EC2
+      ###############################################################
       - name: Upload files to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -46,7 +84,9 @@ jobs:
             docker-compose.yml
           target: /home/ubuntu/crm/
 
-      # 7. Deploy docker compose stack
+      ###############################################################
+      # 8. DEPLOY USING DOCKER-COMPOSE ON EC2
+      ###############################################################
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -55,16 +95,16 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_PORT }}
           script: |
-            echo "Deployment Started"
+            echo "===== Deployment Started ====="
             cd /home/ubuntu/crm
-
-            echo "Loading new Docker image..."
+            
+            echo "Loading Docker Image..."
             sudo docker load -i crm-backend.tar
 
             echo "Stopping old containers..."
             sudo docker compose down || true
 
-            echo "Starting updated containers..."
+            echo "Starting new containers..."
             sudo docker compose up -d
 
-            echo "Deployment Successful!"
+            echo "===== Deployment Completed Successfully ====="
