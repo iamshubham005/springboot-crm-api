@@ -1,6 +1,9 @@
-name: JAVA 17 PROD Deploy
+name: Docker & Compose Deploy to EC2
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
@@ -8,11 +11,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout code
-      - name: Checkout repository
+      # 1️⃣ Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Step 2: Setup Java 17
+      # 2️⃣ Setup JDK 17 (to build jar)
       - name: Setup JDK 17
         uses: actions/setup-java@v3
         with:
@@ -20,44 +23,49 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      # Step 3: Build project
-      - name: Build Spring Boot application
-        run: mvn clean package -DskipTests=false
+      # 3️⃣ Build JAR
+      - name: Build Spring Boot JAR
+        run: mvn clean package -DskipTests
 
-      # Step 4: List the produced JAR
-      - name: Show build output
-        run: ls -lh target/
+      # 4️⃣ Build Docker Image
+      - name: Build Docker Image
+        run: docker build -t crm-backend .
 
-      # Step 5: Upload JAR to EC2
-      - name: Upload JAR to EC2
+      # 5️⃣ Save Docker Image as tar (for SCP upload)
+      - name: Save Docker Image
+        run: docker save crm-backend -o crm-backend.tar
+
+      # 6️⃣ Copy files to EC2 (docker-compose.yml + tar)
+      - name: Copy files to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.KEY }}
           port: ${{ secrets.PORT }}
-          key: ${{ secrets.PRIVATE_KEY }}
-          source: "target/crm-0.0.1-SNAPSHOT.jar"
-          target: "/home/ubuntu/b2b/deployment"
+          source: |
+            crm-backend.tar
+            docker-compose.yml
+          target: /home/ubuntu/crm/
 
-      # Step 6: Restart Java Application (NO DOCKER)
-      - name: Restart CRM Spring Boot App
+      # 7️⃣ Restart using Docker Compose on EC2
+      - name: Deploy Stack on EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.KEY }}
           port: ${{ secrets.PORT }}
-          key: ${{ secrets.PRIVATE_KEY }}
           script: |
-            cd /home/ubuntu/b2b/deployment
+            cd /home/ubuntu/crm
 
-            echo "Stopping old CRM application..."
-            pkill -f "crm" || true
+            echo "Loading new Docker image..."
+            sudo docker load -i crm-backend.tar
 
-            echo "Finding latest JAR..."
-            latestJar=$(ls -t crm-*.jar | head -n 1)
-            echo "Latest JAR = $latestJar"
+            echo "Stopping existing containers..."
+            sudo docker compose down || true
 
-            echo "Starting CRM application..."
-            nohup java -jar "$latestJar" > app.log 2>&1 &
+            echo "Starting updated containers..."
+            sudo docker compose up -d
 
-            echo "CRM deployed successfully!"
+            echo "Deployment completed successfully!"
