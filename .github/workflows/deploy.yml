@@ -2,7 +2,7 @@ name: Deploy CRM via Docker Compose to EC2
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout code
+      # 1. Checkout source code
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -21,7 +21,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # 3. Build JAR
+      # 3. Build Spring Boot JAR
       - name: Build JAR
         run: mvn clean package -DskipTests
 
@@ -29,32 +29,33 @@ jobs:
       - name: Build Docker Image
         run: docker build -t crm-backend .
 
-      # 5. Save docker image for upload
-      - name: Save Docker Image to tar
+      # 5. Save Docker image as tar file
+      - name: Save Docker Image
         run: docker save crm-backend -o crm-backend.tar
 
       # 6. Upload docker image + compose file to EC2
       - name: Upload files to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.PRIVATE_KEY }}
-          port: ${{ secrets.PORT }}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT }}
           source: |
             crm-backend.tar
             docker-compose.yml
           target: /home/ubuntu/crm/
 
-      # 7. SSH and run docker compose
+      # 7. Deploy docker compose stack
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.PRIVATE_KEY }}
-          port: ${{ secrets.PORT }}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT }}
           script: |
+            echo "Deployment Started"
             cd /home/ubuntu/crm
 
             echo "Loading new Docker image..."
@@ -63,7 +64,7 @@ jobs:
             echo "Stopping old containers..."
             sudo docker compose down || true
 
-            echo "Starting containers..."
+            echo "Starting updated containers..."
             sudo docker compose up -d
 
-            echo "CRM deployed successfully!"
+            echo "Deployment Successful!"
