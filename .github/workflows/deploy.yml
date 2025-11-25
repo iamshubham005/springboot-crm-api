@@ -28,11 +28,10 @@ jobs:
       # 4. Build Docker Image
       - name: Build Docker Image
         run: |
-         echo "Building Docker Image..."
-         docker build -t crm-backend .
-         echo "Listing images:"
-         docker images
-
+          echo "Building Docker Image..."
+          docker build -t crm-backend .
+          echo "Listing images:"
+          docker images
 
       # 5. Save Docker Image to tar
       - name: Save Docker Image
