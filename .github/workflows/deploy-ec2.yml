@@ -29,6 +29,10 @@ jobs:
       - name: Save Docker Image as tar
         run: docker save crm-backend:latest -o crm-backend.tar
 
+      - name: Debug workspace files
+        run: ls -R .
+
+
       - name: Upload docker-compose.yml & Docker Image to EC2
         uses: appleboy/scp-action@v0.1.9
         with:
