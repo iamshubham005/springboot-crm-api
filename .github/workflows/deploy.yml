@@ -73,6 +73,6 @@ jobs:
           script: |
             cd /home/ubuntu/crm
             sudo docker load -i crm-backend.tar
-            sudo docker compose down || true
-            sudo docker compose up -d
+            sudo docker-compose down || true
+            sudo docker-compose up -d
             echo "Deployment done!"
