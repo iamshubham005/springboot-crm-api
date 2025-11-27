@@ -20,8 +20,8 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Build Spring Boot Application
-        run: mvn -B clean package -DskipTests=true
+      - name: Build Spring Boot Application (Skip Tests)
+        run: mvn -B clean package -DskipTests=true -Dmaven.test.skip=true
 
       - name: Build Docker Image (Local)
         run: docker build -t crm-backend:latest .
@@ -43,7 +43,7 @@ jobs:
     needs: build
 
     steps:
-      - name: SSH into EC2 and deploy
+      - name: SSH into EC2 and run deployment
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -53,10 +53,10 @@ jobs:
             set -e
             cd ~/crm-deploy
 
-            echo "Loading backend Docker image..."
+            echo "Loading Docker image..."
             docker load -i crm-backend.tar
 
-            echo "Starting application using Docker Compose..."
+            echo "Starting Docker Compose..."
             docker compose down
             docker compose up -d --force-recreate
 
