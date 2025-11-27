@@ -18,7 +18,7 @@ services:
       - crm-network
 
   crm-backend:
-    build: .
+    image: crm-backend
     container_name: crm-backend
     restart: always
     depends_on:
@@ -37,4 +37,3 @@ volumes:
 
 networks:
   crm-network:
-
