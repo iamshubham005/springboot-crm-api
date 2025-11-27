@@ -29,6 +29,10 @@ jobs:
       - name: Save Docker Image to TAR
         run: docker save crm-backend -o crm-backend.tar
 
+      - name: Fix TAR file permission
+        run: chmod 644 crm-backend.tar
+  
+
       - name: Debug workspace (IMPORTANT)
         run: |
           echo "=== WORKSPACE FILES ==="
