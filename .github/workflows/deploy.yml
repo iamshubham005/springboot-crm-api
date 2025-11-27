@@ -70,17 +70,26 @@ jobs:
             if ! command -v docker &> /dev/null
             then
               echo "=== Installing Docker ==="
-              echo "" | sudo -S apt-get install -y ca-certificates curl gnupg
-              echo "" | sudo -S install -m 0755 -d /etc/apt/keyrings
+              # Install prerequisites
+              echo "" | sudo -S apt-get install -y ca-certificates curl gnupg lsb-release
+
+              # Add Docker's official GPG key
               curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo tee /etc/apt/keyrings/docker.gpg > /dev/null
-              echo "" | sudo -S chmod a+r /etc/apt/keyrings/docker.gpg
 
-              echo \
-              "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-              $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+              # Set up the Docker stable repository
+              echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
+              # Update package index again to include Docker packages
               echo "" | sudo -S apt-get update -y
-              echo "" | sudo -S apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin
+
+              # Install Docker
+              echo "" | sudo -S apt-get install -y docker-ce docker-ce-cli containerd.io
+
+              # Start Docker service
+              sudo systemctl start docker
+              sudo systemctl enable docker
+            else
+              echo "=== Docker already installed ==="
             fi
 
             # ---------------------------------------
@@ -89,10 +98,13 @@ jobs:
             if ! docker compose version &> /dev/null
             then
               echo "=== Installing Docker Compose plugin ==="
+              # Install Docker Compose
               echo "" | sudo -S mkdir -p /usr/libexec/docker/cli-plugins/
               echo "" | sudo -S curl -SL https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64 \
                 -o /usr/libexec/docker/cli-plugins/docker-compose
               echo "" | sudo -S chmod +x /usr/libexec/docker/cli-plugins/docker-compose
+            else
+              echo "=== Docker Compose already installed ==="
             fi
 
             # ---------------------------------------
@@ -101,16 +113,13 @@ jobs:
             echo "" | sudo -S usermod -aG docker $USER
 
             # ---------------------------------------
-            # Start Docker Service if not running
+            # Deploy Application
             # ---------------------------------------
-            echo "=== Starting Docker Service if needed ==="
-            sudo systemctl start docker
-
             echo "=== Deploying Application ==="
             cd ~/crm
 
             docker load -i crm-backend.tar
-            docker compose down || true
-            docker compose up -d --force-recreate
+            docker-compose down || true
+            docker-compose up -d --force-recreate
 
             echo "=== Deployment Successful! ==="
