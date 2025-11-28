@@ -44,6 +44,9 @@ jobs:
       - name: Build Docker Image
         run: docker build -t crm-backend .
 
+      - name: Fix permissions for Drone SCP
+        run: chmod 644 crm-backend.tar
+
       # ---------------------------------------
       # Step 4.5: Save image as TAR
       # ---------------------------------------
