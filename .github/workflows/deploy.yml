@@ -33,43 +33,22 @@ jobs:
         run: mvn -B clean package -DskipTests=true
 
       # ---------------------------------------
-      # Step 3.5: List artifacts
+      # Step 4: Copy source code and docker-compose file to EC2
       # ---------------------------------------
-      - name: List build artifacts
-        run: ls -la target/
-
-      # ---------------------------------------
-      # Step 4: Build Docker image locally
-      # ---------------------------------------
-      - name: Build Docker Image
-        run: docker build -t crm-backend .
-
-      - name: Fix permissions for Drone SCP
-        run: chmod 644 crm-backend.tar
-
-      # ---------------------------------------
-      # Step 4.5: Save image as TAR
-      # ---------------------------------------
-      - name: Save Docker image to TAR
-        run: docker save crm-backend -o crm-backend.tar
-
-      # ---------------------------------------
-      # Step 5: Copy TAR + docker-compose.yml to EC2
-      # ---------------------------------------
-      - name: Copy Docker image and compose file to EC2
+      - name: Copy source code and docker-compose.yml to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_PORT }}
-          source: "crm-backend.tar,docker-compose.yml"
+          source: "docker-compose.yml,pom.xml,target/*.jar"
           target: "/home/${{ secrets.EC2_USER }}/crm"
 
       # ---------------------------------------
-      # Step 6: SSH into EC2 → auto-install Docker & run container
+      # Step 5: SSH into EC2 to build the Docker image and deploy
       # ---------------------------------------
-      - name: Install Docker & Deploy Container on EC2 (Amazon Linux)
+      - name: SSH into EC2 → Build Docker image and Deploy container
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -127,10 +106,10 @@ jobs:
             fi
 
             # ---------------------------------------
-            # Load Docker image from TAR
+            # Build Docker image from the source code
             # ---------------------------------------
-            echo "Loading Docker image from crm-backend.tar"
-            sudo docker load -i crm-backend.tar
+            echo "Building Docker image on EC2"
+            sudo docker build -t crm-backend .
 
             # ---------------------------------------
             # Deploy using docker compose
