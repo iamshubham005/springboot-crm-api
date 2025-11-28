@@ -34,16 +34,18 @@ jobs:
 
       # ---------------------------------------
       # Step 4: Copy source code and docker-compose file to EC2
-      # ---------------------------------------
-      - name: Copy source code and docker-compose.yml to EC2
+     # ---------------------------------------
+
+      - name: Copy source code, Dockerfile, and docker-compose.yml to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: ${{ secrets.EC2_PORT }}
-          source: "docker-compose.yml,pom.xml,target/*.jar"
-          target: "/home/${{ secrets.EC2_USER }}/crm"
+            host: ${{ secrets.EC2_HOST }}
+            username: ${{ secrets.EC2_USER }}
+            key: ${{ secrets.EC2_SSH_KEY }}
+            port: ${{ secrets.EC2_PORT }}
+            source: "docker-compose.yml,pom.xml,target/*.jar,Dockerfile"
+            target: "/home/${{ secrets.EC2_USER }}/crm"
+
 
       # ---------------------------------------
       # Step 5: SSH into EC2 to build the Docker image and deploy
