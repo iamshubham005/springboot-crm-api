@@ -67,15 +67,15 @@ jobs:
             cd "$DEPLOY_DIR"
 
             # ---------------------------------------
-            # Install Docker CE (Amazon Linux)
+            # Install Docker CE (Amazon Linux 2023)
             # ---------------------------------------
             if ! command -v docker >/dev/null 2>&1 ; then
-              echo "Docker not found — installing (Amazon Linux)"
+              echo "Docker not found — installing (Amazon Linux 2023)"
 
-              sudo yum update -y
-              sudo amazon-linux-extras install docker -y
+              sudo dnf update -y
+              sudo dnf install -y docker
 
-              sudo service docker start
+              sudo systemctl start docker
               sudo systemctl enable docker
             else
               echo "Docker present: $(docker --version)"
